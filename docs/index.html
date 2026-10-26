@@ -499,7 +499,11 @@ html{scroll-padding-top:90px}#sumarComercio{scroll-margin-top:85px}
 @media(max-width:620px){.xp-layout{grid-template-columns:1fr}.xp-score{min-height:104px;flex-direction:row;gap:12px}.xp-score .score{font-size:44px}.xp-display{padding:18px}.xp-rank{font-size:43px}.xp-next{font-size:13px}}
 @media(prefers-reduced-motion:reduce){.xp-fill,.xp-fill:after{animation:none!important}}
 </style>
-<link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#B2542B"><link rel="apple-touch-icon" href="./icons/riggo-192.png"></head>
+<link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#B2542B"><link rel="apple-touch-icon" href="./icons/riggo-192.png"><link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./riggo.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="RIGGO">
+</head>
 <body><div style="position:relative;z-index:1001;background:#422d21;color:#fff;text-align:center;font:700 12px system-ui;padding:7px 12px">RIGGO · DEMOSTRACIÓN SIN CONEXIÓN A FIREBASE · LOS DATOS NO SE COMPARTEN</div>
 <header>
   <div class="nav">
@@ -1340,4 +1344,6 @@ const ptag=new URLSearchParams(location.search).get('nfc');if(ptag){const u=byTa
  });
 })();
 </script>
+<div id="riggo-pwa-banner" style="position:fixed;left:7px;right:7px;top:env(safe-area-inset-top,0px);z-index:2147483600;max-width:410px;margin:auto;background:#fff8e8;border:2px solid #e8792e;border-radius:12px;padding:7px 10px;text-align:center;font:600 11px/1.3 system-ui;color:#693714;box-shadow:0 3px 15px #0002">RIGGO · DEMO OFFLINE · SIN VISITAS EN LA NUBE · SIN NFC REAL <a href="./nfc-diagnostico.html" style="margin-left:5px;color:#af4a21">PROBAR NFC</a></div>
+<script>if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('./sw.js').catch(()=>{});</script>
 </body></html>
