@@ -1,0 +1,17 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'com.riggo.demo'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.riggo.demo'
+        minSdk 26
+        targetSdk 35
+        versionCode 1221
+        versionName '12.2.1-demo'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    buildTypes { debug { minifyEnabled false } }
+}
