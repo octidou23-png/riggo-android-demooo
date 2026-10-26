@@ -9,7 +9,7 @@ on:
       - 'gradle.properties'
       - '.github/workflows/compilar-apk-demo.yml'
 permissions:
-  contents: read
+  contents: write
 jobs:
   compilar-apk:
     name: Android debug APK API 35
@@ -46,3 +46,15 @@ jobs:
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publicar APK para descarga directa
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          FILE=app/build/outputs/apk/debug/app-debug.apk
+          TAG=riggo-demo-android-api35
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$FILE" --clobber
+          else
+            gh release create "$TAG" "$FILE" --title "RIGGO Demo Android API 35" --notes "APK de demostración offline para recorrer Inicio, Socio, Comercio y Administrador. Sin Firebase productivo ni NFC físico." --prerelease
+          fi
