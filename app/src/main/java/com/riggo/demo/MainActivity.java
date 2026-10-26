@@ -2,74 +2,81 @@ package com.riggo.demo;
 
 import android.app.Activity;
 import android.graphics.Color;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.view.View;
+import android.os.Build;
 import android.view.WindowInsets;
 import android.webkit.WebChromeClient;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceResponse;
-import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebSettings;
+import android.webkit.WebResourceRequest;
+import android.net.Uri;
 import android.widget.FrameLayout;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
-public class MainActivity extends Activity {
-  private WebView browser;
-  private final String origin = "appassets.androidplatform.net";
-  private WebResourceResponse empty() {
-    return new WebResourceResponse("text/plain","UTF-8",new ByteArrayInputStream(new byte[0]));
-  }
-  @Override public void onCreate(Bundle state) {
-    super.onCreate(state);
-    getWindow().setStatusBarColor(Color.rgb(241,225,203));
-    getWindow().setNavigationBarColor(Color.rgb(242,230,208));
-    FrameLayout root = new FrameLayout(this);
-    browser = new WebView(this);
-    WebSettings s = browser.getSettings();
-    s.setJavaScriptEnabled(true);
-    s.setDomStorageEnabled(true);
-    s.setAllowFileAccess(false);
-    s.setAllowContentAccess(false);
-    s.setBlockNetworkLoads(true);
-    s.setJavaScriptCanOpenWindowsAutomatically(false);
-    s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-    if (Build.VERSION.SDK_INT >= 26) s.setSafeBrowsingEnabled(true);
-    browser.setWebChromeClient(new WebChromeClient());
-    browser.setWebViewClient(new WebViewClient() {
-      @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest req) {
-        Uri u = req.getUrl();
-        return !("https".equals(u.getScheme()) && origin.equals(u.getHost()) && "/assets/index.html".equals(u.getPath()));
-      }
-      @Override public WebResourceResponse shouldInterceptRequest(WebView v, WebResourceRequest req) {
-        Uri u = req.getUrl();
-        if (!"https".equals(u.getScheme()) || !origin.equals(u.getHost()) || !"/assets/index.html".equals(u.getPath())) return empty();
-        try {
-          InputStream in = getAssets().open("index.html");
-          return new WebResourceResponse("text/html","UTF-8",in);
-        } catch (IOException e) { return empty(); }
-      }
-    });
-    root.addView(browser, new FrameLayout.LayoutParams(-1,-1));
-    setContentView(root);
-    if (Build.VERSION.SDK_INT >= 35) {
-      root.setOnApplyWindowInsetsListener((v,insets)->{
-        android.graphics.Insets i = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
-        v.setPadding(i.left,i.top,i.right,i.bottom);
-        return insets;
-      });
+public final class MainActivity extends Activity {
+    private WebView web;
+    private static final String ORIGIN = "https://appassets.androidplatform.net/assets/";
+
+    @Override public void onCreate(Bundle state) {
+        super.onCreate(state);
+        getWindow().setStatusBarColor(Color.rgb(252, 242, 228));
+        getWindow().setNavigationBarColor(Color.rgb(252, 242, 228));
+
+        FrameLayout root = new FrameLayout(this);
+        web = new WebView(this);
+        WebSettings settings = web.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setAllowFileAccess(false);
+        settings.setAllowContentAccess(false);
+        settings.setBlockNetworkLoads(true);
+        settings.setJavaScriptCanOpenWindowsAutomatically(false);
+        settings.setSupportMultipleWindows(false);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        if (Build.VERSION.SDK_INT >= 26) settings.setSafeBrowsingEnabled(true);
+        web.setWebChromeClient(new WebChromeClient());
+        web.setWebViewClient(new WebViewClient(){
+            @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                // Demo offline: URLs de otros dominios no abren dentro de la app.
+                return uri == null || !"https".equals(uri.getScheme()) ||
+                    !"appassets.androidplatform.net".equals(uri.getHost());
+            }
+        });
+        root.addView(web, new FrameLayout.LayoutParams(-1, -1));
+        setContentView(root);
+        if (Build.VERSION.SDK_INT >= 35) {
+            root.setOnApplyWindowInsetsListener((view, insets) -> {
+                android.graphics.Insets bars = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+                view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+                return insets;
+            });
+        }
+        try (InputStream input = getAssets().open("index.html");
+             ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+            byte[] bytes = new byte[16384];
+            int count;
+            while ((count = input.read(bytes)) != -1) buffer.write(bytes,0,count);
+            String html = new String(buffer.toByteArray(), StandardCharsets.UTF_8);
+            html = html.replace("<script src=\"./firebase-public-config.js\"></script>",
+                "<script>window.RIGGO_FIREBASE_CONFIG=null;</script>");
+            // Renderizar la aplicación sin solicitar una URL remota.
+            web.loadDataWithBaseURL(ORIGIN, html, "text/html", "UTF-8", null);
+        } catch (Exception e) {
+            web.loadDataWithBaseURL(ORIGIN,
+               "<html><body><h2>No se pudo abrir RIGGO</h2><p>Reinstalar la demo.</p></body></html>",
+               "text/html", "UTF-8", null);
+        }
     }
-    browser.loadUrl("https://"+origin+"/assets/index.html");
-  }
-  @Override public void onBackPressed() {
-    if (browser != null && browser.canGoBack()) browser.goBack(); else super.onBackPressed();
-  }
-  @Override protected void onDestroy() {
-    if (browser != null) { browser.destroy(); browser=null; }
-    super.onDestroy();
-  }
+    @Override public void onBackPressed() {
+        if (web != null && web.canGoBack()) web.goBack();
+        else super.onBackPressed();
+    }
+    @Override protected void onDestroy() {
+        if (web != null) { web.destroy(); web=null; }
+        super.onDestroy();
+    }
 }
